@@ -95,6 +95,8 @@ namespace LoRaWan.IntegrationTest
         List<TestDeviceInfo> deviceRange1000_ABP = new List<TestDeviceInfo>();
         public IReadOnlyCollection<TestDeviceInfo> DeviceRange1000_ABP { get { return deviceRange1000_ABP; } }
 
+        List<TestDeviceInfo> deviceRange1200_100_ABP = new List<TestDeviceInfo>();
+        public IReadOnlyCollection<TestDeviceInfo> DeviceRange1200_100_ABP { get { return deviceRange1200_100_ABP; } }
 
         public IntegrationTestFixture()
         {
@@ -402,9 +404,29 @@ namespace LoRaWan.IntegrationTest
                 SensorDecoder = "http://localhost:8888/api/DecoderValueSensor",
             };
 
+            // Range of 11 devices from 1100 to 1110
             for (var deviceID=1100; deviceID <= 1110; deviceID++)
             {
                 this.deviceRange1000_ABP.Add(
+                    new TestDeviceInfo
+                    {
+                        DeviceID = deviceID.ToString("0000000000000000"),
+                        AppEUI = deviceID.ToString("0000000000000000"),
+                        AppKey = deviceID.ToString("00000000000000000000000000000000"),
+                        GatewayID = gatewayID,
+                        IsIoTHubDevice = true,
+                        SensorDecoder = "DecoderValueSensor",
+                        AppSKey=deviceID.ToString("00000000000000000000000000000000"),
+                        NwkSKey=deviceID.ToString("00000000000000000000000000000000"),
+                        DevAddr=deviceID.ToString("00000000"),
+                    }
+                );
+            }
+
+            // Range of 100 devices from 1200 to 1299
+            for (var deviceID=1200; deviceID <= 1299; deviceID++)
+            {
+                this.deviceRange1200_100_ABP.Add(
                     new TestDeviceInfo
                     {
                         DeviceID = deviceID.ToString("0000000000000000"),

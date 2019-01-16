@@ -160,15 +160,17 @@ namespace LoRaWan.IntegrationTest
 
         }
 
-
         // Scenario:
         // - 100x ABP devices
         // - Sending unconfirmed messages
         // - Goal: 20 devices in parallel
         [Fact]
-        public async Task Hundred_ABP_Simulated_Devices_Unconfirmed()
+        public async Task Multiple_ABP_Simulated_Devices_Unconfirmed()
         {
-            // amount of messages to send by device (without warm-up phase)
+            // amount of devices to test with. Maximum is 100
+            var scenarioDeviceNumber = 20;
+            
+            // amount of messages to send per device (without warm-up phase)
             var scenarioMessagesPerDevice = 10;
 
             // amount of devices to send data in parallel
@@ -177,11 +179,28 @@ namespace LoRaWan.IntegrationTest
             // amount of devices to send data in parallel for the warm-up phase
             var warmUpDeviceStepSize = 2;
 
+            // amount of miliseconds to wait before checking LoRaWanNetworkSrvModule
+            // for successful sending of messages to IoT Hub.
+            // delay for 100 devices: 120000
+            // delay for 20 devices: 15000
+            var delayNetworkServerCheck = 15000;
+
+            // amount of miliseconds to wait before checking of messages in IoT Hub
+            // delay for 100 devices: 60000
+            // delay for 20 devices: 15000
+            var delayIoTHubCheck = 15000;
+
+
+            int count = 0;
             var listSimulatedDevices = new List<SimulatedDevice>();            
             foreach (var device in this.TestFixture.DeviceRange1200_100_ABP)
             {
-                var simulatedDevice = new SimulatedDevice(device);
-                listSimulatedDevices.Add(simulatedDevice);
+                if (count < scenarioDeviceNumber && count < 100)
+                { 
+                    var simulatedDevice = new SimulatedDevice(device);
+                    listSimulatedDevices.Add(simulatedDevice);
+                    count++;
+                }
             }
 
             var totalDevices = listSimulatedDevices.Count;            
@@ -200,7 +219,7 @@ namespace LoRaWan.IntegrationTest
                     tasks.Clear();
                     foreach (var device in listSimulatedDevices.Skip(i).Take(warmUpDeviceStepSize)) // works?
                     {
-                        TestLogger.Log($"[Warm-up] {device.LoRaDevice.DeviceID}");
+                        TestLogger.Log($"[WARM-UP] {device.LoRaDevice.DeviceID}");
                         tasks.Add(device.SendUnconfirmedMessageAsync(simulatedPacketForwarder, "0"));
                     }
 
@@ -232,9 +251,8 @@ namespace LoRaWan.IntegrationTest
             }
 
             // Wait before executing to allow for all messages to be sent
-            var delay = 120000;
-            TestLogger.Log($"[INFO] Waiting for {delay / 1000} sec. before the test continues...");
-            await Task.Delay(delay);
+            TestLogger.Log($"[INFO] Waiting for {delayNetworkServerCheck / 1000} sec. before the test continues...");
+            await Task.Delay(delayNetworkServerCheck);
 
             // 3. test Network Server logs if messages have arrived
             string expectedPayload;
@@ -249,12 +267,10 @@ namespace LoRaWan.IntegrationTest
                 }
             }
 
-            // Wait before executing to allow for late arrival of messages in IoT Hub
-            delay = 60000;
-            TestLogger.Log($"[INFO] Waiting for {delay / 1000} sec. before the test continues...");
-            await Task.Delay(delay);
+            TestLogger.Log($"[INFO] Waiting for {delayIoTHubCheck / 1000} sec. before the test continues...");
+            await Task.Delay(delayIoTHubCheck);
             
-            // 4. test IoT Hub for arrival of messages.
+            // IoT Hub test for arrival of messages.
             var eventsByDevices = this.TestFixture.IoTHubMessages.GetEvents()
                 .GroupBy(x => x.SystemProperties["iothub-connection-device-id"])
                 .ToDictionary(x => x.Key, x => x.ToList());
@@ -262,7 +278,8 @@ namespace LoRaWan.IntegrationTest
             // 4. Check that we have the right amount of devices receiving messages in IoT Hub
             Assert.Equal(totalDevices, eventsByDevices.Count());
             
-            // 5. Check that the correct amount of messages have arrived per device
+            // 5. Check that the correct number of messages have arrived in IoT Hub per device
+            //    Warn only.
             foreach (var device in listSimulatedDevices)
             {
                 //Assert.True(
@@ -290,7 +307,8 @@ namespace LoRaWan.IntegrationTest
                 }
             }
 
-            // 6. Check if expected messages have arrived in IoT Hub
+            // 6. Check if all expected messages have arrived in IoT Hub
+            //    Warn only.
             foreach (var device in listSimulatedDevices)
             {
                 TestLogger.Log($"[INFO] Looking for IoT Hub messages for {device.LoRaDevice.DeviceID}");

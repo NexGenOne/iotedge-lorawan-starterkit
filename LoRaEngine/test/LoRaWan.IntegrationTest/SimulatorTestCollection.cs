@@ -168,7 +168,7 @@ namespace LoRaWan.IntegrationTest
         public async Task Multiple_ABP_Simulated_Devices_Unconfirmed()
         {
             // amount of devices to test with. Maximum is 100
-            var scenarioDeviceNumber = 20;
+            var scenarioDeviceNumber = 100;
             
             // amount of messages to send per device (without warm-up phase)
             var scenarioMessagesPerDevice = 10;
@@ -179,16 +179,19 @@ namespace LoRaWan.IntegrationTest
             // amount of devices to send data in parallel for the warm-up phase
             var warmUpDeviceStepSize = 2;
 
+            // amount of messages to send before device join is to occur
+            var messagesBeforeJoin = 10;
+
             // amount of miliseconds to wait before checking LoRaWanNetworkSrvModule
             // for successful sending of messages to IoT Hub.
             // delay for 100 devices: 120000
             // delay for 20 devices: 15000
-            var delayNetworkServerCheck = 15000;
+            var delayNetworkServerCheck = 60000;
 
             // amount of miliseconds to wait before checking of messages in IoT Hub
             // delay for 100 devices: 60000
             // delay for 20 devices: 15000
-            var delayIoTHubCheck = 15000;
+            var delayIoTHubCheck = 30000;
 
             // Get random number seed
             Random rnd = new Random();
@@ -205,9 +208,15 @@ namespace LoRaWan.IntegrationTest
                     count++;
                 }
             }
-
-            var totalDevices = listSimulatedDevices.Count;            
+            var totalDevices = listSimulatedDevices.Count;
             
+            var listSimulatedJoinDevices = new List<SimulatedDevice>();
+            foreach (var joinDdevice in this.TestFixture.DeviceRange1000_ABP)
+            {
+                var simulatedJoinDevice = new SimulatedDevice(joinDdevice);
+                listSimulatedJoinDevices.Add(simulatedJoinDevice);
+            }
+
             var networkServerIPEndpoint = CreateNetworkServerEndpoint();
 
             using (var simulatedPacketForwarder = new SimulatedPacketForwarder(networkServerIPEndpoint))
@@ -235,15 +244,29 @@ namespace LoRaWan.IntegrationTest
 
                 // 2. picking 20x devices sends messages (send 10 messages for each device)
                 //    timeout of 5 seconds between each
+                int messageCounter = 0;
+                int joinDevice = 0;
+
                 for (var messageId=1; messageId <= scenarioMessagesPerDevice; ++messageId)
                 {
                     for (var i = 0; i < totalDevices;)
                     {
                         tasks.Clear();
                         var payload = seed + messageId.ToString().PadLeft(3, '0');
+
                         foreach (var device in listSimulatedDevices.Skip(i).Take(scenarioDeviceStepSize))
                         {
                             tasks.Add(device.SendUnconfirmedMessageAsync(simulatedPacketForwarder, payload));
+
+                            messageCounter++;
+                            if (messageCounter == messagesBeforeJoin-1)
+                            {
+                                tasks.Add(listSimulatedJoinDevices[joinDevice].JoinAsync(simulatedPacketForwarder));
+                                TestLogger.Log($"[INFO] Join request sent for {listSimulatedJoinDevices[joinDevice].LoRaDevice.DeviceID}");
+
+                                joinDevice = (joinDevice == 10) ? 0 : joinDevice+1;
+                                messageCounter = 0;
+                            }
                         }
 
                         await Task.WhenAll(tasks);

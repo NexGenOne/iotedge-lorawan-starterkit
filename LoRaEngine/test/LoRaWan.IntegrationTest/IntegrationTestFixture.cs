@@ -443,7 +443,7 @@ namespace LoRaWan.IntegrationTest
                 );
             }
 
-            // Range of 100 devices from 1200 to 1299
+            // Range of 100 devices from 1200 to 1299: Used for load testing
             for (var deviceID=1200; deviceID <= 1299; deviceID++)
             {
                 this.deviceRange1200_100_ABP.Add(

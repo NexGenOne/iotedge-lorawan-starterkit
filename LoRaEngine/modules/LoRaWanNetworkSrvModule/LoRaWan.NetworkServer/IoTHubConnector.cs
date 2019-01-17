@@ -202,7 +202,7 @@ namespace LoRaWan.NetworkServer
             }
         }
 
-        public async Task SendMessageAsync(string strMessage,List<KeyValuePair<String,String>> properties)
+        public async Task<bool> SendMessageAsync(string strMessage,List<KeyValuePair<String,String>> properties)
         {
 
             if (!string.IsNullOrEmpty(strMessage))
@@ -233,6 +233,8 @@ namespace LoRaWan.NetworkServer
 
                     //disable retry, this allows the server to close the connection if another gateway tries to open the connection for the same device                    
                     setRetry(false);
+
+                    return true;
                 }
                 catch (Exception ex)
                 {
@@ -242,8 +244,8 @@ namespace LoRaWan.NetworkServer
                     Logger.Log(DevEUI, $"could not send message to IoTHub/Edge with error: {ex.Message}", Logger.LoggingLevel.Error);
                    
                 }
-
             }
+            return false;
         }
 
         public async Task<Message> ReceiveAsync(TimeSpan timeout)

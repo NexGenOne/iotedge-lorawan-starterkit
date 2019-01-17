@@ -193,24 +193,32 @@ namespace LoRaWan.NetworkServer
                             }
                         }
                         string iotHubMsg = fullPayload.ToString(Newtonsoft.Json.Formatting.None);
-                        await loraDeviceInfo.HubSender.SendMessageAsync(iotHubMsg, messageProperties);
+                        var sendSuccess = await loraDeviceInfo.HubSender.SendMessageAsync(iotHubMsg, messageProperties);
 
-                        if (isAckFromDevice)
+                        var fullPayloadAsString = string.Empty;
+                        if (fullPayload.data is JValue jvalue)
                         {
-                            Logger.Log(loraDeviceInfo.DevEUI, $"ack from device sent to hub", Logger.LoggingLevel.Info);
+                            fullPayloadAsString = jvalue.ToString();
+                        }
+                        else if (fullPayload.data is JObject jobject)
+                        {
+                            fullPayloadAsString = jobject.ToString(Formatting.None);
+                        }
+
+                        if (sendSuccess)
+                        {
+                            if (isAckFromDevice)
+                            {
+                                Logger.Log(loraDeviceInfo.DevEUI, $"ack from device sent to hub", Logger.LoggingLevel.Info);
+                            }
+                            else
+                            {
+                                Logger.Log(loraDeviceInfo.DevEUI, $"message '{fullPayloadAsString}' sent to hub", Logger.LoggingLevel.Info);
+                            }
                         }
                         else
                         {
-                            var fullPayloadAsString = string.Empty;
-                            if (fullPayload.data is JValue jvalue)
-                            {
-                                fullPayloadAsString = jvalue.ToString();
-                            }
-                            else if (fullPayload.data is JObject jobject)
-                            {
-                                fullPayloadAsString = jobject.ToString(Formatting.None);
-                            }
-                            Logger.Log(loraDeviceInfo.DevEUI, $"message '{fullPayloadAsString}' sent to hub", Logger.LoggingLevel.Info);
+                            Logger.Log(loraDeviceInfo.DevEUI, $"message '{fullPayloadAsString}' failed to send to hub", Logger.LoggingLevel.Error);
                         }
                         loraDeviceInfo.FCntUp = fcntup;
                     }

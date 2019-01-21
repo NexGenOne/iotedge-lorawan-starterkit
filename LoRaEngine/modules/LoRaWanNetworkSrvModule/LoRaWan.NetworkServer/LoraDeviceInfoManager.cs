@@ -351,7 +351,7 @@ namespace LoRaWan.NetworkServer
             AppNonce = OTAAKeysGenerator.getAppNonce();
             AppSKey = OTAAKeysGenerator.calculateKey(new byte[1] { 0x02 }, ConversionHelper.StringToByteArray(AppNonce), netId, ConversionHelper.StringToByteArray(DevNonce), ConversionHelper.StringToByteArray(joinLoraDeviceInfo.AppKey));
             NwkSKey = OTAAKeysGenerator.calculateKey(new byte[1] { 0x01 }, ConversionHelper.StringToByteArray(AppNonce), netId, ConversionHelper.StringToByteArray(DevNonce), ConversionHelper.StringToByteArray(joinLoraDeviceInfo.AppKey)); ;
-            DevAddr = OTAAKeysGenerator.getDevAddr(netId);
+            DevAddr = OTAAKeysGenerator.getNwkId(netId);
             joinLoraDeviceInfo.DevAddr = DevAddr;
             joinLoraDeviceInfo.NwkSKey = NwkSKey;
             joinLoraDeviceInfo.AppSKey = AppSKey;

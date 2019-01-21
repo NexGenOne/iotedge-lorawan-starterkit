@@ -98,6 +98,10 @@ namespace LoRaWan.IntegrationTest
         List<TestDeviceInfo> deviceRange1200_100_ABP = new List<TestDeviceInfo>();
         public IReadOnlyCollection<TestDeviceInfo> DeviceRange1200_100_ABP { get { return deviceRange1200_100_ABP; } }
 
+        List<TestDeviceInfo> deviceRange1300_10_OTAA = new List<TestDeviceInfo>();
+        public IReadOnlyCollection<TestDeviceInfo> DeviceRange1300_10_OTAA { get { return deviceRange1300_10_OTAA; } }
+
+
         public IntegrationTestFixture()
         {
             this.Configuration = TestConfiguration.GetConfiguration();
@@ -404,7 +408,7 @@ namespace LoRaWan.IntegrationTest
                 SensorDecoder = "http://localhost:8888/api/DecoderValueSensor",
             };
 
-            // Range of 11 devices from 1100 to 1110
+            // Range of 11 ABP devices from 1100 to 1110
             for (var deviceID=1100; deviceID <= 1110; deviceID++)
             {
                 this.deviceRange1000_ABP.Add(
@@ -423,7 +427,7 @@ namespace LoRaWan.IntegrationTest
                 );
             }
 
-            // Range of 100 devices from 1200 to 1299: Used for load testing
+            // Range of 100 ABP devices from 1200 to 1299: Used for load testing
             for (var deviceID=1200; deviceID <= 1299; deviceID++)
             {
                 this.deviceRange1200_100_ABP.Add(
@@ -438,6 +442,22 @@ namespace LoRaWan.IntegrationTest
                         AppSKey=deviceID.ToString("00000000000000000000000000000000"),
                         NwkSKey=deviceID.ToString("00000000000000000000000000000000"),
                         DevAddr=deviceID.ToString("00000000"),
+                    }
+                );
+            }
+
+            // Range of 10 OTAA devices from 1300 to 1309: Used for load testing
+            for (var deviceID = 1300; deviceID <= 1309; deviceID++)
+            {
+                this.deviceRange1300_10_OTAA.Add(
+                    new TestDeviceInfo
+                    {
+                        DeviceID = deviceID.ToString("0000000000000000"),
+                        AppEUI = deviceID.ToString("0000000000000000"),
+                        AppKey = deviceID.ToString("00000000000000000000000000000000"),
+                        GatewayID = gatewayID,
+                        IsIoTHubDevice = true,
+                        SensorDecoder = "DecoderValueSensor",
                     }
                 );
             }
@@ -585,6 +605,7 @@ namespace LoRaWan.IntegrationTest
 
         private async Task CreateOrUpdateDevicesAsync()
         {
+            TestLogger.Log($"Creating or updating IoT Hub devices...");
             var registryManager = GetRegistryManager();
             foreach (var testDevice in GetAllDevices().Where(x => x.IsIoTHubDevice))
             {
@@ -629,6 +650,7 @@ namespace LoRaWan.IntegrationTest
                     }
                 }
             }
+            TestLogger.Log($"Done creating or updating IoT Hub devices.");
         }
 
         // Helper method to return TestDeviceInfo by a property name, NOT THE DEVICE ID!!

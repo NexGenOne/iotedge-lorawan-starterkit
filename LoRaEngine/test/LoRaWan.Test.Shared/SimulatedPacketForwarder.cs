@@ -22,11 +22,13 @@ namespace LoRaWan.Test.Shared
         public Rxpk rxpk { get; set; }
         // Used for the point 0. Always increase
         public long TimeAtBoot { get; internal set; }
-
         public byte[] MacAddress { get; }
         public SimulatedPacketForwarder(IPEndPoint networkServerIPEndpoint, Rxpk rxpk = null)
         {
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, 1681);
+            IPAddress ip = IPAddress.Any;
+            int port = 1681;
+            IPEndPoint endPoint = new IPEndPoint(ip, port);
+            
             this.udpClient = new UdpClient(endPoint);
             this.networkServerIPEndpoint = networkServerIPEndpoint;
             TimeAtBoot = DateTimeOffset.Now.UtcTicks;
@@ -44,6 +46,8 @@ namespace LoRaWan.Test.Shared
                 rssi = -17,
                 lsnr = 12.0f
             };
+                        
+            TestLogger.Log($"*** Simulated Packed Forwarder created: {ip}:{port} ***");
         }
 
         string CreateMessagePacket(byte[] data)

@@ -32,6 +32,9 @@ namespace LoRaWan.IntegrationTest
         public string LeafDeviceSerialPort { get; set; } = "/dev/ttyACM";
         public string LeafDeviceGatewayID { get; set; }
 
+        // IP of the LoRaWanNetworkSrvModule
+        public string NetworkServerIP { get; set; }
+
         // Device prefix to be used
         public string DevicePrefix { get; set; }
         public bool CreateDevices { get; set; } = true;
